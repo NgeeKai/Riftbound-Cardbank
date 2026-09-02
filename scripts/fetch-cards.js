@@ -1,9 +1,10 @@
-// Pulls the full Riftbound card list from a public community API and writes
+// Pulls the full Riftbound card list from public community APIs and writes
 // it to data/cards.json for the website to search locally.
 //
-// Tries Riftcodex first, and falls back to RiftScribe if that's blocked
-// (some APIs reject requests from cloud/CI IP ranges or missing browser-like
-// headers).
+// Primary source: DotGG (api.dotgg.gg) — a long-running, actively maintained
+// fan database that also powers riftbound.gg, returns the whole card list in
+// a single request, and has stayed reachable in testing.
+// Falls back to Riftcodex, then RiftScribe, if DotGG is ever unavailable.
 //
 // Run with: node scripts/fetch-cards.js
 // (Node 18+ has global fetch built in.)
@@ -19,6 +20,17 @@ const BROWSER_HEADERS = {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
   Accept: "application/json",
 };
+
+async function fetchAllFromDotgg() {
+  const url = "https://api.dotgg.gg/cgfw/getcards?game=riftbound";
+  const res = await fetch(url, { headers: BROWSER_HEADERS });
+  if (!res.ok) {
+    throw new Error(`DotGG request failed: ${res.status} ${res.statusText}`);
+  }
+  const data = await res.json();
+  const cards = Array.isArray(data) ? data : data.items ?? data.data ?? [];
+  return cards;
+}
 
 async function fetchAllFromRiftcodex() {
   const base = "https://api.riftcodex.com/api/cards";
@@ -75,15 +87,26 @@ async function fetchAllFromRiftscribe() {
 }
 
 async function fetchAllCards() {
-  try {
-    const cards = await fetchAllFromRiftcodex();
-    if (cards.length > 0) return cards;
-    console.warn("Riftcodex returned zero cards, trying RiftScribe instead.");
-  } catch (err) {
-    console.warn(`Riftcodex failed (${err.message}), trying RiftScribe instead.`);
+  const sources = [
+    ["dotgg", fetchAllFromDotgg],
+    ["riftcodex", fetchAllFromRiftcodex],
+    ["riftscribe", fetchAllFromRiftscribe],
+  ];
+
+  for (const [name, fn] of sources) {
+    try {
+      const cards = await fn();
+      if (cards.length > 0) {
+        console.log(`Using ${name} (${cards.length} cards)`);
+        return cards;
+      }
+      console.warn(`${name} returned zero cards, trying next source.`);
+    } catch (err) {
+      console.warn(`${name} failed (${err.message}), trying next source.`);
+    }
   }
 
-  return fetchAllFromRiftscribe();
+  return [];
 }
 
 async function main() {
