@@ -415,9 +415,9 @@ function addCard(card) {
     list.push({
       id: cardId,
       name: card.name,
-      set: card.set || card.set_id || card.expansion?.name || card.expansion || '',
+      set: card.set_id || card.set || card.expansion?.name || card.expansion || '',
       rarity: card.rarity || '',
-      domain: card.domain || card.domain_identity || '',
+      domain: card.domain || card.color || card.domain_identity || '',
       quantity: 1,
     });
   }
@@ -464,7 +464,7 @@ function renderResults(cards) {
   cards.forEach(card => {
     const row = document.createElement('div');
     row.className = 'result-row';
-    const setName = card.set || card.set_id || card.expansion?.name || card.expansion || '';
+    const setName = card.set_id || card.set || card.expansion?.name || card.expansion || '';
     row.innerHTML = `
       <div class="meta">
         <div class="card-name">${escapeHtml(card.name)}</div>
