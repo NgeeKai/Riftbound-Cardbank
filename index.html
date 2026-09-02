@@ -3,29 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Riftbound List Builder</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
   :root{
     --void:#14121f;
     --surface:#1e1b2e;
     --surface-2:#282440;
-    --line:#38334f;
+    --line: #38334f;
     --text:#ede9f5;
     --text-dim:#a9a3c2;
     --gold:#d9a441;
     --teal:#4fd1c5;
     --danger:#e2695c;
   }
-
-  *{
-    box-sizing:border-box;
-  }
-
+  *{box-sizing:border-box;}
   body{
     margin:0;
     background:
@@ -35,11 +28,7 @@
     min-height:100vh;
     padding:28px 16px 60px;
   }
-
-  .wrap{
-    max-width:900px;
-    margin:0 auto;
-  }
+  .wrap{max-width:900px;margin:0 auto;}
 
   header{
     display:flex;
@@ -49,49 +38,30 @@
     margin-bottom:26px;
     flex-wrap:wrap;
   }
-
   h1{
     font-family:'Cinzel',serif;
     font-weight:700;
     font-size:1.9rem;
     margin:0;
     letter-spacing:.01em;
-    background:linear-gradient(
-      90deg,
-      var(--gold),
-      #f3d387 60%,
-      var(--gold)
-    );
+    background:linear-gradient(90deg,var(--gold),#f3d387 60%,var(--gold));
     -webkit-background-clip:text;
     background-clip:text;
     color:transparent;
   }
-
-  .sub{
-    color:var(--text-dim);
-    font-size:.88rem;
-    margin-top:4px;
-  }
-
+  .sub{color:var(--text-dim); font-size:.88rem; margin-top:4px;}
   .icon-btn{
     background:var(--surface-2);
     border:1px solid var(--line);
     color:var(--text);
-    width:40px;
-    height:40px;
+    width:40px;height:40px;
     border-radius:10px;
     font-size:1.1rem;
     cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex;align-items:center;justify-content:center;
     transition:border-color .15s ease, transform .15s ease;
   }
-
-  .icon-btn:hover{
-    border-color:var(--teal);
-    transform:translateY(-1px);
-  }
+  .icon-btn:hover{border-color:var(--teal); transform:translateY(-1px);}
 
   .panel{
     background:var(--surface);
@@ -101,12 +71,8 @@
     margin-bottom:18px;
   }
 
-  .search-row{
-    position:relative;
-  }
-
-  input[type="text"],
-  input[type="url"]{
+  .search-row{position:relative;}
+  input[type="text"], input[type="url"]{
     width:100%;
     background:var(--surface-2);
     border:1px solid var(--line);
@@ -117,39 +83,16 @@
     font-family:inherit;
     outline:none;
   }
-
-  input[type="text"]:focus,
-  input[type="url"]:focus{
-    border-color:var(--teal);
-  }
-
-  .search-row input{
-    padding-right:38px;
-  }
-
+  input[type="text"]:focus, input[type="url"]:focus{border-color:var(--teal);}
+  .search-row input{padding-right:38px;}
   .search-spinner{
-    position:absolute;
-    right:12px;
-    top:50%;
-    transform:translateY(-50%);
-    width:16px;
-    height:16px;
-    border-radius:50%;
-    border:2px solid var(--line);
-    border-top-color:var(--teal);
-    animation:spin .7s linear infinite;
-    display:none;
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:16px;height:16px;border-radius:50%;
+    border:2px solid var(--line); border-top-color:var(--teal);
+    animation:spin .7s linear infinite; display:none;
   }
-
-  .search-spinner.on{
-    display:block;
-  }
-
-  @keyframes spin{
-    to{
-      transform:translateY(-50%) rotate(360deg);
-    }
-  }
+  .search-spinner.on{display:block;}
+  @keyframes spin{to{transform:translateY(-50%) rotate(360deg);}}
 
   .results{
     margin-top:10px;
@@ -159,1908 +102,673 @@
     max-height:340px;
     overflow-y:auto;
   }
-
   .result-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
+    display:flex; align-items:center; gap:10px;
     background:var(--surface-2);
     border:1px solid var(--line);
     border-radius:10px;
     padding:9px 12px;
   }
-
-  .result-row .meta{
-    flex:1;
-    min-width:0;
-  }
-
-  .card-name{
-    font-weight:600;
-    font-size:.92rem;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-
-  .card-tags{
-    color:var(--text-dim);
-    font-size:.76rem;
-    margin-top:2px;
-  }
-
-  .variant-code{
-    font-family:ui-monospace,Menlo,monospace;
-    color:var(--teal);
-  }
-
-  .finish-buttons{
-    display:flex;
-    gap:6px;
-    flex-shrink:0;
-  }
-
+  .result-row .meta{flex:1; min-width:0;}
+  .card-name{font-weight:600; font-size:.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card-tags{color:var(--text-dim); font-size:.76rem; margin-top:2px;}
+  .variant-code{font-family:ui-monospace,Menlo,monospace; color:var(--teal);}
   .add-btn{
-    background:var(--teal);
-    color:#0c221f;
-    border:none;
-    min-width:48px;
-    height:30px;
-    padding:0 8px;
-    border-radius:8px;
-    font-size:.72rem;
-    font-weight:700;
-    cursor:pointer;
-    white-space:nowrap;
+    background:var(--teal); color:#0c221f; border:none;
+    width:30px;height:30px;border-radius:8px;font-size:1rem;font-weight:700;
+    cursor:pointer; flex-shrink:0;
   }
-
-  .add-btn:hover{
-    filter:brightness(1.08);
-  }
-
-  .foil-btn{
-    background:var(--gold);
-    color:#2a1c02;
-  }
-
-  .no-version{
-    color:var(--text-dim);
-    font-size:.72rem;
-    white-space:nowrap;
-  }
-
-  .empty-note{
-    color:var(--text-dim);
-    font-size:.85rem;
-    padding:8px 2px;
-  }
+  .add-btn:hover{filter:brightness(1.08);}
+  .empty-note{color:var(--text-dim); font-size:.85rem; padding:8px 2px;}
 
   .list-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:14px;
-    flex-wrap:wrap;
-    gap:10px;
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:14px; flex-wrap:wrap; gap:10px;
   }
-
   .list-head h2{
-    font-family:'Cinzel',serif;
-    font-size:1.1rem;
-    margin:0;
-    font-weight:600;
+    font-family:'Cinzel',serif; font-size:1.1rem; margin:0; font-weight:600;
   }
-
-  .count-pill{
-    color:var(--text-dim);
-    font-size:.82rem;
-  }
+  .count-pill{color:var(--text-dim); font-size:.82rem;}
 
   .sync-btn{
-    background:var(--gold);
-    color:#2a1c02;
-    border:none;
-    padding:9px 16px;
-    border-radius:9px;
-    font-weight:600;
-    font-size:.85rem;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    gap:8px;
+    background:var(--gold); color:#2a1c02; border:none;
+    padding:9px 16px; border-radius:9px; font-weight:600; font-size:.85rem;
+    cursor:pointer; display:flex; align-items:center; gap:8px;
   }
+  .sync-btn:hover{filter:brightness(1.06);}
+  .sync-btn:disabled{opacity:.55; cursor:not-allowed;}
+  .status-text{font-size:.78rem; color:var(--text-dim); margin-top:8px;}
+  .status-text.ok{color:var(--teal);}
+  .status-text.err{color:var(--danger);}
 
-  .sync-btn:hover{
-    filter:brightness(1.06);
-  }
-
-  .sync-btn:disabled{
-    opacity:.55;
-    cursor:not-allowed;
-  }
-
-  .status-text{
-    font-size:.78rem;
-    color:var(--text-dim);
-    margin-top:8px;
-  }
-
-  .status-text.ok{
-    color:var(--teal);
-  }
-
-  .status-text.err{
-    color:var(--danger);
-  }
-
-  .list-rows{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
-
+  .list-rows{display:flex; flex-direction:column; gap:8px;}
   .list-row{
-    display:flex;
-    align-items:center;
-    gap:10px;
+    display:flex; align-items:center; gap:10px;
     background:var(--surface-2);
     border:1px solid var(--line);
     border-radius:10px;
     padding:9px 12px;
   }
-
-  .list-row .meta{
-    flex:1;
-    min-width:0;
-  }
-
-  .finish-badge{
-    display:inline-block;
-    padding:2px 7px;
-    border-radius:5px;
-    font-size:.68rem;
-    font-weight:700;
-    margin-left:5px;
-  }
-
-  .finish-normal{
-    color:#c9e8e4;
-    background:rgba(79,209,197,.15);
-    border:1px solid rgba(79,209,197,.3);
-  }
-
-  .finish-foil{
-    color:#f3d387;
-    background:rgba(217,164,65,.15);
-    border:1px solid rgba(217,164,65,.3);
-  }
-
-  .qty-ctrl{
-    display:flex;
-    align-items:center;
-    gap:6px;
-  }
-
+  .list-row .meta{flex:1; min-width:0;}
+  .qty-ctrl{display:flex; align-items:center; gap:6px;}
   .qty-ctrl button{
-    background:var(--void);
-    border:1px solid var(--line);
-    color:var(--text);
-    width:26px;
-    height:26px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:.95rem;
+    background:var(--void); border:1px solid var(--line); color:var(--text);
+    width:26px;height:26px;border-radius:6px; cursor:pointer; font-size:.95rem;
   }
-
-  .qty-ctrl span{
-    min-width:20px;
-    text-align:center;
-    font-variant-numeric:tabular-nums;
-  }
-
+  .qty-ctrl span{min-width:20px; text-align:center; font-variant-numeric:tabular-nums;}
   .remove-btn{
-    background:none;
-    border:none;
-    color:var(--text-dim);
-    font-size:1.1rem;
-    cursor:pointer;
-    padding:2px 4px;
+    background:none; border:none; color:var(--text-dim); font-size:1.1rem;
+    cursor:pointer; padding:2px 4px;
   }
-
-  .remove-btn:hover{
-    color:var(--danger);
-  }
+  .remove-btn:hover{color:var(--danger);}
 
   .empty-state{
-    text-align:center;
-    padding:34px 10px;
-    color:var(--text-dim);
+    text-align:center; padding:34px 10px; color:var(--text-dim);
   }
-
-  .empty-state .glyph{
-    font-size:1.8rem;
-    margin-bottom:8px;
-  }
+  .empty-state .glyph{font-size:1.8rem; margin-bottom:8px;}
 
   /* modal */
-
   .overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(10,9,16,.72);
-    display:none;
-    align-items:flex-start;
-    justify-content:center;
-    padding:40px 16px;
-    overflow-y:auto;
-    z-index:50;
+    position:fixed; inset:0; background:rgba(10,9,16,.72);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:40px 16px; overflow-y:auto; z-index:50;
   }
-
-  .overlay.on{
-    display:flex;
-  }
-
+  .overlay.on{display:flex;}
   .modal{
-    background:var(--surface);
-    border:1px solid var(--line);
-    border-radius:14px;
-    max-width:560px;
-    width:100%;
-    padding:24px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    max-width:560px; width:100%; padding:24px;
   }
-
-  .modal h3{
-    font-family:'Cinzel',serif;
-    margin:0 0 6px;
-    font-size:1.15rem;
+  .modal h3{font-family:'Cinzel',serif; margin:0 0 6px; font-size:1.15rem;}
+  .modal p{color:var(--text-dim); font-size:.87rem; line-height:1.55;}
+  .modal ol{color:var(--text-dim); font-size:.85rem; line-height:1.7; padding-left:20px;}
+  .modal code, .code-block{
+    font-family:ui-monospace,Menlo,monospace; font-size:.78rem;
   }
-
-  .modal p{
-    color:var(--text-dim);
-    font-size:.87rem;
-    line-height:1.55;
-  }
-
-  .modal ol{
-    color:var(--text-dim);
-    font-size:.85rem;
-    line-height:1.7;
-    padding-left:20px;
-  }
-
-  .modal code,
   .code-block{
-    font-family:ui-monospace,Menlo,monospace;
-    font-size:.78rem;
+    background:var(--void); border:1px solid var(--line); border-radius:8px;
+    padding:12px; white-space:pre-wrap; word-break:break-word; color:#c9e8e4;
+    max-height:220px; overflow-y:auto; margin:10px 0;
   }
-
-  .code-block{
-    background:var(--void);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:12px;
-    white-space:pre-wrap;
-    word-break:break-word;
-    color:#c9e8e4;
-    max-height:220px;
-    overflow-y:auto;
-    margin:10px 0;
-  }
-
-  .modal-actions{
-    display:flex;
-    gap:10px;
-    margin-top:16px;
-    flex-wrap:wrap;
-  }
-
+  .modal-actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
   .btn-primary{
-    background:var(--teal);
-    color:#0c221f;
-    border:none;
-    padding:9px 16px;
-    border-radius:9px;
-    font-weight:600;
-    cursor:pointer;
-    font-size:.85rem;
+    background:var(--teal); color:#0c221f; border:none; padding:9px 16px;
+    border-radius:9px; font-weight:600; cursor:pointer; font-size:.85rem;
   }
-
   .btn-ghost{
-    background:none;
-    color:var(--text-dim);
-    border:1px solid var(--line);
-    padding:9px 16px;
-    border-radius:9px;
-    cursor:pointer;
-    font-size:.85rem;
+    background:none; color:var(--text-dim); border:1px solid var(--line);
+    padding:9px 16px; border-radius:9px; cursor:pointer; font-size:.85rem;
   }
-
-  .toggle-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-top:14px;
-  }
-
-  .switch{
-    position:relative;
-    width:40px;
-    height:22px;
-  }
-
-  .switch input{
-    opacity:0;
-    width:0;
-    height:0;
-  }
-
+  .toggle-row{display:flex; align-items:center; justify-content:space-between; margin-top:14px;}
+  .switch{position:relative; width:40px; height:22px;}
+  .switch input{opacity:0; width:0; height:0;}
   .slider{
-    position:absolute;
-    inset:0;
-    background:var(--surface-2);
-    border:1px solid var(--line);
-    border-radius:20px;
-    cursor:pointer;
-    transition:.15s;
+    position:absolute; inset:0; background:var(--surface-2); border:1px solid var(--line);
+    border-radius:20px; cursor:pointer; transition:.15s;
   }
-
   .slider::before{
-    content:"";
-    position:absolute;
-    width:16px;
-    height:16px;
-    left:2px;
-    top:2px;
-    background:var(--text-dim);
-    border-radius:50%;
-    transition:.15s;
+    content:""; position:absolute; width:16px; height:16px; left:2px; top:2px;
+    background:var(--text-dim); border-radius:50%; transition:.15s;
   }
+  input:checked + .slider{background:rgba(79,209,197,.25); border-color:var(--teal);}
+  input:checked + .slider::before{transform:translateX(18px); background:var(--teal);}
 
-  input:checked + .slider{
-    background:rgba(79,209,197,.25);
-    border-color:var(--teal);
-  }
-
-  input:checked + .slider::before{
-    transform:translateX(18px);
-    background:var(--teal);
-  }
-
-  footer{
-    text-align:center;
-    color:var(--text-dim);
-    font-size:.72rem;
-    margin-top:20px;
-  }
-
-  a{
-    color:var(--teal);
-  }
-
-  @media(max-width:600px){
-
-    .result-row{
-      align-items:flex-start;
-    }
-
-    .finish-buttons{
-      flex-direction:column;
-    }
-
-    .add-btn{
-      width:70px;
-    }
-
-    .list-row{
-      flex-wrap:wrap;
-    }
-
-    .list-row .meta{
-      min-width:calc(100% - 10px);
-    }
-  }
+  footer{text-align:center; color:var(--text-dim); font-size:.72rem; margin-top:20px;}
+  a{color:var(--teal);}
 </style>
+
+<style>
+#viewSheetBtn {
+  margin-left: 8px;
+  cursor: pointer;
+}
+</style>
+
 </head>
-
 <body>
-
 <div class="wrap">
-
   <header>
     <div>
       <h1>Riftbound List Builder</h1>
-
-      <div class="sub">
-        Search the card database, build a list, sync it to a Google Sheet.
-        Foil and Non-Foil are tracked separately.
-      </div>
+      <div class="sub">Search the card database, build a list, sync it to a Google Sheet.</div>
     </div>
+    <button class="icon-btn" id="settingsBtn" title="Sheet sync settings">⚙</button>
 
-    <button
-      class="icon-btn"
-      id="settingsBtn"
-      title="Sheet sync settings">
-      ⚙
-    </button>
+<button id="viewSheetBtn" type="button" title="Open the shared Google Sheet">
+  📊 View Google Sheet
+</button>
+
   </header>
 
-
-  <!-- SEARCH -->
-
   <div class="panel search-row">
-
-    <input
-      type="text"
-      id="searchInput"
-      placeholder="Search for a card, e.g. Ahri, Void Gate, Jinx..."
-      autocomplete="off">
-
-    <div
-      class="search-spinner"
-      id="spinner">
-    </div>
-
-    <div
-      class="results"
-      id="results">
-    </div>
-
+    <input type="text" id="searchInput" placeholder="Search for a card, e.g. Ahri, Void Gate, Jinx..." autocomplete="off">
+    <div class="search-spinner" id="spinner"></div>
+    <div class="results" id="results"></div>
   </div>
-
-
-  <!-- LIST -->
 
   <div class="panel">
-
     <div class="list-head">
-
       <h2>Your list</h2>
-
-      <span
-        class="count-pill"
-        id="countPill">
-        0 cards
-      </span>
-
+      <span class="count-pill" id="countPill">0 cards</span>
     </div>
-
     <div id="listBody"></div>
-
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        gap:12px;
-        margin-top:14px;
-        flex-wrap:wrap;
-      ">
-
-      <button
-        class="sync-btn"
-        id="syncBtn">
-        Sync to Sheet
-      </button>
-
-      <span
-        class="status-text"
-        id="statusText">
-      </span>
-
+    <div style="display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap;">
+      <button class="sync-btn" id="syncBtn">Sync to Sheet</button>
+      <span class="status-text" id="statusText"></span>
     </div>
-
   </div>
 
-
-  <footer>
-    Card data from the community RiftScribe API.
-    Not affiliated with Riot Games.
-  </footer>
-
+  <footer>Card data from the community RiftScribe API. Not affiliated with Riot Games.</footer>
 </div>
 
-
-<!-- SETTINGS MODAL -->
-
-<div
-  class="overlay"
-  id="overlay">
-
+<div class="overlay" id="overlay">
   <div class="modal">
-
-    <h3>
-      Connect your Google Sheet
-    </h3>
-
-    <p>
-      This uses a small Google Apps Script attached to your own Sheet
-      as a free write-endpoint — no Google Cloud project or API keys needed.
-    </p>
-
+    <h3>Connect your Google Sheet</h3>
+    <p>This uses a small Google Apps Script attached to your own Sheet as a free write-endpoint — no Google Cloud project or API keys needed.</p>
     <ol>
-
-      <li>
-        Create or open a Google Sheet.
-      </li>
-
-      <li>
-        Extensions → Apps Script,
-        delete any starter code,
-        and paste the script below.
-      </li>
-
-      <li>
-        Click Deploy → New deployment → type "Web app".
-        Set "Execute as" to <b>Me</b>
-        and "Who has access" to <b>Anyone</b>.
-      </li>
-
-      <li>
-        Copy the Web app URL it gives you
-        and paste it below.
-      </li>
-
+      <li>Create or open a Google Sheet.</li>
+      <li>Extensions → Apps Script, delete any starter code, and paste the script below.</li>
+      <li>Click Deploy → New deployment → type "Web app". Set "Execute as" to <b>Me</b> and "Who has access" to <b>Anyone</b>.</li>
+      <li>Copy the Web app URL it gives you and paste it below. Once you put the URL into DEFAULT_WEBHOOK_URL in this HTML file, every computer using this file will use the same Sheet automatically.</li>
     </ol>
-
-
-    <div
-      class="code-block"
-      id="scriptCode">
-    </div>
-
-
-    <button
-      class="btn-ghost"
-      id="copyScriptBtn"
-      style="margin-bottom:14px;">
-      Copy script
-    </button>
-
-
-    <input
-      type="url"
-      id="webhookInput"
-      placeholder="Paste your Web app URL here">
-
-
+    <div class="code-block" id="scriptCode"></div>
+    <button class="btn-ghost" id="copyScriptBtn" style="margin-bottom:14px;">Copy script</button>
+    <input type="url" id="webhookInput" placeholder="Paste your Web app URL here">
     <div class="toggle-row">
-
-      <span
-        style="
-          font-size:.85rem;
-          color:var(--text-dim);
-        ">
-        Auto-sync on every change
-      </span>
-
+      <span style="font-size:.85rem; color:var(--text-dim);">Auto-sync on every change</span>
       <label class="switch">
-
-        <input
-          type="checkbox"
-          id="autoSyncToggle">
-
+        <input type="checkbox" id="autoSyncToggle">
         <span class="slider"></span>
-
       </label>
-
     </div>
-
-
     <div class="modal-actions">
-
-      <button
-        class="btn-primary"
-        id="saveSettingsBtn">
-        Save
-      </button>
-
-      <button
-        class="btn-ghost"
-        id="closeSettingsBtn">
-        Close
-      </button>
-
+      <button class="btn-primary" id="saveSettingsBtn">Save</button>
+      <button class="btn-ghost" id="closeSettingsBtn">Close</button>
     </div>
-
   </div>
-
 </div>
-
 
 <script>
-
-/* ============================================================
-   CARD DATABASE
-   ============================================================ */
-
 const CARDS_URL = "./data/cards.json";
 
+/*
+ * GOOGLE SHEET CONFIGURATION
+ * Paste your Google Apps Script Web App URL here once.
+ *
+ * Because this is hard-coded into the page, every computer that opens this
+ * same HTML file will automatically load/save the same Google Sheet.
+ */
+const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzoDlRxCPtr7sP9sTyDsnIt1V-j-b8U12Dr_R-LwFOM_VPpppRBxkt3ksp6q7JKaLYM/exec";
 let allCards = [];
-
 let cardsLoaded = false;
-
 let cardsLoadError = null;
 
-
-/* ============================================================
-   LOAD CARD DATABASE
-   ============================================================ */
-
-async function loadCardDatabase(){
-
-  try{
-
+async function loadCardDatabase() {
+  try {
     const res = await fetch(CARDS_URL);
-
-    if(!res.ok){
-      throw new Error(`Status ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`Status ${res.status}`);
     const data = await res.json();
-
     allCards = data.cards || [];
-
     cardsLoaded = true;
-
-  }catch(err){
-
-    cardsLoadError =
-      err.message || "unknown error";
-
-    console.error(
-      "Failed to load local card database:",
-      err
-    );
-
+  } catch (err) {
+    cardsLoadError = err.message || "unknown error";
+    console.error("Failed to load local card database:", err);
   }
-
 }
-
-
-/* ============================================================
-   ELEMENT REFERENCES
-   ============================================================ */
 
 const els = {
-
-  search:
-    document.getElementById('searchInput'),
-
-  spinner:
-    document.getElementById('spinner'),
-
-  results:
-    document.getElementById('results'),
-
-  listBody:
-    document.getElementById('listBody'),
-
-  countPill:
-    document.getElementById('countPill'),
-
-  syncBtn:
-    document.getElementById('syncBtn'),
-
-  statusText:
-    document.getElementById('statusText'),
-
-  overlay:
-    document.getElementById('overlay'),
-
-  settingsBtn:
-    document.getElementById('settingsBtn'),
-
-  closeSettingsBtn:
-    document.getElementById('closeSettingsBtn'),
-
-  saveSettingsBtn:
-    document.getElementById('saveSettingsBtn'),
-
-  webhookInput:
-    document.getElementById('webhookInput'),
-
-  autoSyncToggle:
-    document.getElementById('autoSyncToggle'),
-
-  scriptCode:
-    document.getElementById('scriptCode'),
-
-  copyScriptBtn:
-    document.getElementById('copyScriptBtn')
-
+  search: document.getElementById('searchInput'),
+  spinner: document.getElementById('spinner'),
+  results: document.getElementById('results'),
+  listBody: document.getElementById('listBody'),
+  countPill: document.getElementById('countPill'),
+  syncBtn: document.getElementById('syncBtn'),
+  statusText: document.getElementById('statusText'),
+  overlay: document.getElementById('overlay'),
+  settingsBtn: document.getElementById('settingsBtn'),
+  closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+  saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+  webhookInput: document.getElementById('webhookInput'),
+  autoSyncToggle: document.getElementById('autoSyncToggle'),
+  scriptCode: document.getElementById('scriptCode'),
+  copyScriptBtn: document.getElementById('copyScriptBtn'),
 };
 
-
-/* ============================================================
-   GOOGLE APPS SCRIPT
-   ============================================================ */
-
-const APPS_SCRIPT = `function doPost(e) {
-
-  var sheet =
-    SpreadsheetApp
-      .getActiveSpreadsheet()
-      .getSheetByName('Riftbound')
-    ||
-    SpreadsheetApp
-      .getActiveSpreadsheet()
-      .insertSheet('Riftbound');
-
-  var data =
-    JSON.parse(e.postData.contents);
-
-  sheet.clearContents();
-
-  sheet.appendRow([
-    'Card ID',
-    'Name',
-    'Set',
-    'Rarity',
-    'Domain',
-    'Finish',
-    'Quantity'
-  ]);
-
-  data.cards.forEach(function(c) {
-
-    sheet.appendRow([
-      c.cardId || c.id,
-      c.name,
-      c.set,
-      c.rarity,
-      c.domain,
-      c.finish || '',
-      c.quantity
-    ]);
-
-  });
-
-  return ContentService
-    .createTextOutput(
-      JSON.stringify({
-        status: 'ok',
-        count: data.cards.length
-      })
-    )
-    .setMimeType(
-      ContentService.MimeType.JSON
-    );
-}`;
-
-els.scriptCode.textContent = APPS_SCRIPT;
-
-
-/* ============================================================
-   APPLICATION STATE
-   ============================================================ */
-
-let list = [];
-
-let webhookUrl = '';
-
-let autoSync = false;
-
-let searchTimer = null;
-
-
-/* ============================================================
-   LOAD SAVED STATE
-   ============================================================ */
-
-function loadState(){
-
-  try{
-
-    const l =
-      localStorage.getItem(
-        'riftbound:list'
-      );
-
-    list =
-      l
-        ? JSON.parse(l)
-        : [];
-
-  }catch(e){
-
-    list = [];
-
+const APPS_SCRIPT = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Riftbound');
+  if (!sheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', cards: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-
-  try{
-
-    webhookUrl =
-      localStorage.getItem(
-        'riftbound:webhook'
-      ) || '';
-
-  }catch(e){
-
-    webhookUrl = '';
-
+  var values = sheet.getDataRange().getValues();
+  if (values.length <= 1) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok', cards: [] }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
-
-  try{
-
-    autoSync =
-      localStorage.getItem(
-        'riftbound:autosync'
-      ) === 'true';
-
-  }catch(e){
-
-    autoSync = false;
-
-  }
-
-
-  els.webhookInput.value =
-    webhookUrl;
-
-  els.autoSyncToggle.checked =
-    autoSync;
-
-
-  /*
-   * Migration support:
-   *
-   * Older list entries did not have
-   * cardId / finish fields.
-   *
-   * Treat those as Non-Foil so
-   * existing saved lists continue
-   * to work.
-   */
-
-  list.forEach(c => {
-
-    if(!c.cardId){
-
-      if(c.id){
-        c.cardId = c.id;
-      }
-
-    }
-
-    if(!c.finish){
-
-      c.finish = 'Non-Foil';
-
-    }
-
-    /*
-     * Ensure the internal ID includes
-     * the finish so old entries don't
-     * accidentally merge with new ones.
-     */
-
-    if(c.cardId){
-
-      c.id =
-        `${c.cardId}::${c.finish}`;
-
-    }
-
-  });
-
-
-  renderList();
-
-}
-
-
-/* ============================================================
-   SAVE LIST
-   ============================================================ */
-
-function saveList(){
-
-  try{
-
-    localStorage.setItem(
-      'riftbound:list',
-      JSON.stringify(list)
-    );
-
-  }catch(e){
-
-    console.error(
-      'Failed to save list',
-      e
-    );
-
-  }
-
-}
-
-
-/* ============================================================
-   RENDER LIST
-   ============================================================ */
-
-function renderList(){
-
-  const total =
-    list.reduce(
-      (s,c) =>
-        s + Number(c.quantity || 0),
-      0
-    );
-
-
-  els.countPill.textContent =
-    `${list.length} selection${list.length === 1 ? '' : 's'} · ${total} total`;
-
-
-  if(list.length === 0){
-
-    els.listBody.innerHTML = `
-      <div class="empty-state">
-
-        <div class="glyph">
-          ◇
-        </div>
-
-        Search above and add cards
-        to start your list.
-
-      </div>
-    `;
-
-    return;
-
-  }
-
-
-  els.listBody.innerHTML = '';
-
-
-  const rowsWrap =
-    document.createElement('div');
-
-  rowsWrap.className =
-    'list-rows';
-
-
-  list.forEach((c,idx) => {
-
-    const row =
-      document.createElement('div');
-
-    row.className =
-      'list-row';
-
-
-    const finish =
-      c.finish || 'Non-Foil';
-
-
-    const finishClass =
-      finish === 'Foil'
-        ? 'finish-foil'
-        : 'finish-normal';
-
-
-    row.innerHTML = `
-
-      <div class="meta">
-
-        <div class="card-name">
-
-          ${escapeHtml(c.name)}
-
-          <span
-            class="finish-badge ${finishClass}">
-            ${escapeHtml(finish)}
-          </span>
-
-        </div>
-
-        <div class="card-tags">
-
-          ${escapeHtml(c.set || '')}
-
-          ${c.rarity
-            ? ' · ' + escapeHtml(c.rarity)
-            : ''}
-
-          ${c.domain
-            ? ' · ' + escapeHtml(c.domain)
-            : ''}
-
-          ${c.cardId
-            ? ' · <span class="variant-code">' +
-              escapeHtml(c.cardId) +
-              '</span>'
-            : ''}
-
-        </div>
-
-      </div>
-
-
-      <div class="qty-ctrl">
-
-        <button
-          data-act="dec"
-          data-idx="${idx}">
-          −
-        </button>
-
-        <span>
-          ${c.quantity}
-        </span>
-
-        <button
-          data-act="inc"
-          data-idx="${idx}">
-          +
-        </button>
-
-      </div>
-
-
-      <button
-        class="remove-btn"
-        data-act="remove"
-        data-idx="${idx}">
-        ✕
-      </button>
-
-    `;
-
-
-    rowsWrap.appendChild(row);
-
-  });
-
-
-  els.listBody.appendChild(
-    rowsWrap
-  );
-
-}
-
-
-/* ============================================================
-   HTML ESCAPE
-   ============================================================ */
-
-function escapeHtml(str){
-
-  const d =
-    document.createElement('div');
-
-  d.textContent =
-    str == null
-      ? ''
-      : String(str);
-
-  return d.innerHTML;
-
-}
-
-
-/* ============================================================
-   LIST CONTROLS
-   ============================================================ */
-
-els.listBody.addEventListener(
-  'click',
-  (e) => {
-
-    const btn =
-      e.target.closest(
-        'button[data-act]'
-      );
-
-    if(!btn){
-      return;
-    }
-
-
-    const idx =
-      parseInt(
-        btn.dataset.idx,
-        10
-      );
-
-
-    const act =
-      btn.dataset.act;
-
-
-    if(act === 'inc'){
-
-      list[idx].quantity += 1;
-
-    }
-
-
-    if(act === 'dec'){
-
-      list[idx].quantity -= 1;
-
-      if(list[idx].quantity <= 0){
-
-        list.splice(idx,1);
-
-      }
-
-    }
-
-
-    if(act === 'remove'){
-
-      list.splice(idx,1);
-
-    }
-
-
-    renderList();
-
-    saveList();
-
-
-    if(autoSync){
-
-      doSync(true);
-
-    }
-
-  }
-);
-
-
-/* ============================================================
-   ADD CARD
-   ============================================================ */
-
-function addCard(card, finish){
-
-  /*
-   * Original card ID.
-   *
-   * Example:
-   * OG-123
-   */
-
-  const baseId =
-    card.id ||
-    card.riftbound_id ||
-    card.name;
-
-
-  /*
-   * The finish becomes part of
-   * the internal ID.
-   *
-   * Example:
-   *
-   * OG-123::Non-Foil
-   * OG-123::Foil
-   *
-   * This guarantees that foil and
-   * non-foil can never merge.
-   */
-
-  const cardId =
-    `${baseId}::${finish}`;
-
-
-  const existing =
-    list.find(
-      c => c.id === cardId
-    );
-
-
-  if(existing){
-
-    existing.quantity += 1;
-
-  }else{
-
-    list.push({
-
-      /*
-       * Unique inventory ID
-       */
-      id:cardId,
-
-      /*
-       * Original card ID
-       */
-      cardId:baseId,
-
-      name:card.name,
-
-      set:
-        card.set_id ||
-        card.set ||
-        card.expansion?.name ||
-        card.expansion ||
-        '',
-
-      rarity:
-        card.rarity || '',
-
-      domain:
-        card.domain ||
-        card.color ||
-        card.domain_identity ||
-        '',
-
-      /*
-       * Non-Foil / Foil
-       */
-      finish:finish,
-
-      quantity:1
-
+  var headers = values[0];
+  var cards = [];
+
+  for (var i = 1; i < values.length; i++) {
+    var row = values[i];
+    if (!row[0]) continue;
+
+    var obj = {};
+    headers.forEach(function(h, j) {
+      obj[h] = row[j];
     });
 
+    cards.push({
+      id: String(obj['Card ID'] || ''),
+      name: String(obj['Name'] || ''),
+      set: String(obj['Set'] || ''),
+      rarity: String(obj['Rarity'] || ''),
+      domain: String(obj['Domain'] || ''),
+      finish: String(obj['Finish'] || 'Non-Foil'),
+      quantity: Number(obj['Quantity'] || 0)
+    });
   }
 
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', cards: cards }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName('Riftbound') || ss.insertSheet('Riftbound');
+    var data = JSON.parse(e.postData.contents);
+
+    sheet.clearContents();
+    sheet.appendRow(['Card ID', 'Name', 'Set', 'Rarity', 'Domain', 'Finish', 'Quantity']);
+
+    data.cards.forEach(function(c) {
+      sheet.appendRow([
+        c.id,
+        c.name,
+        c.set,
+        c.rarity,
+        c.domain,
+        c.finish || 'Non-Foil',
+        c.quantity
+      ]);
+    });
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: 'ok',
+        count: data.cards.length
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}`;els.scriptCode.textContent = APPS_SCRIPT;
+
+let list = [];
+let webhookUrl = '';
+let autoSync = false;
+let searchTimer = null;
+
+function loadState() {
+  try {
+    const l = localStorage.getItem('riftbound:list');
+    list = l ? JSON.parse(l) : [];
+  } catch (e) { list = []; }
+  migrateList();
+
+  try {
+    webhookUrl = localStorage.getItem('riftbound:webhook') || DEFAULT_WEBHOOK_URL;
+  } catch (e) { webhookUrl = DEFAULT_WEBHOOK_URL; }
+
+  try {
+    autoSync = localStorage.getItem('riftbound:autosync') !== 'false';
+  } catch (e) { autoSync = true; }
+
+  els.webhookInput.value = webhookUrl;
+  els.autoSyncToggle.checked = autoSync;
+
+  // Show cached data immediately, then replace it with the Google Sheet copy.
   renderList();
 
-  saveList();
-
-
-  if(autoSync){
-
-    doSync(true);
-
+  if (webhookUrl && !webhookUrl.includes('PASTE_YOUR_')) {
+    loadListFromSheet();
+  } else {
+    setStatus('Connect your Google Sheet in ⚙ settings.', '');
   }
-
 }
 
+async function loadListFromSheet() {
+  if (!webhookUrl || webhookUrl.includes('PASTE_YOUR_')) return;
 
-/* ============================================================
-   SEARCH
-   ============================================================ */
+  setStatus('Loading list from Google Sheet…', '');
 
-function runSearch(q){
+  try {
+    const res = await fetch(webhookUrl, { method: 'GET', cache: 'no-store' });
+    if (!res.ok) throw new Error(`Status ${res.status}`);
 
-  const query =
-    (q || '')
-      .trim()
-      .toLowerCase();
+    const data = await res.json();
+    if (data.status !== 'ok' || !Array.isArray(data.cards)) {
+      throw new Error('Invalid response from Google Apps Script');
+    }
 
+    list = data.cards
+      .filter(c => Number(c.quantity) > 0)
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        set: c.set || '',
+        rarity: c.rarity || '',
+        domain: c.domain || '',
+        finish: c.finish || 'Non-Foil',
+        quantity: Number(c.quantity) || 0
+      }));
 
-  if(query.length < 2){
+    saveList();
+    renderList();
 
+    setStatus(
+      `Loaded ${list.length} card${list.length === 1 ? '' : 's'} from Google Sheet · ${new Date().toLocaleTimeString()}`,
+      'ok'
+    );
+  } catch (err) {
+    console.error('Failed to load list from Google Sheet:', err);
+    setStatus(
+      'Could not load Google Sheet. Showing local cached list instead.',
+      'err'
+    );
+  }
+}
+
+function migrateList() {
+  list = (Array.isArray(list) ? list : []).map(c => {
+    const finish = c.finish || 'Non-Foil';
+    const id = c.id || c.cardId || c.name;
+    return {
+      ...c,
+      id,
+      finish,
+      uniqueId: c.uniqueId || `${id}::${finish}`,
+      quantity: Number(c.quantity) || 0
+    };
+  }).filter(c => c.quantity > 0);
+}
+
+function saveList() {
+  try { localStorage.setItem('riftbound:list', JSON.stringify(list)); }
+  catch (e) { console.error('Failed to save list', e); }
+}
+
+function renderList() {
+  const total = list.reduce((s, c) => s + c.quantity, 0);
+  els.countPill.textContent = `${list.length} card${list.length === 1 ? '' : 's'} · ${total} total`;
+
+  if (list.length === 0) {
+    els.listBody.innerHTML = `<div class="empty-state"><div class="glyph">◇</div>Search above and add cards to start your list.</div>`;
+    return;
+  }
+
+  els.listBody.innerHTML = '';
+  const rowsWrap = document.createElement('div');
+  rowsWrap.className = 'list-rows';
+  list.forEach((c, idx) => {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `
+      <div class="meta">
+        <div class="card-name">${escapeHtml(c.name)}</div>
+        <div class="card-tags">${escapeHtml(c.set || '')} · ${escapeHtml(c.rarity || '')}${c.domain ? ' · ' + escapeHtml(c.domain) : ''}${c.id ? ' · <span class="variant-code">' + escapeHtml(c.id) + '</span>' : ''}${c.finish ? ' · ' + escapeHtml(c.finish) : ''}</div>
+      </div>
+      <div class="qty-ctrl">
+        <button data-act="dec" data-idx="${idx}">−</button>
+        <span>${c.quantity}</span>
+        <button data-act="inc" data-idx="${idx}">+</button>
+      </div>
+      <button class="remove-btn" data-act="remove" data-idx="${idx}">✕</button>
+    `;
+    rowsWrap.appendChild(row);
+  });
+  els.listBody.appendChild(rowsWrap);
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+els.listBody.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  const act = btn.dataset.act;
+  if (act === 'inc') list[idx].quantity += 1;
+  if (act === 'dec') {
+    list[idx].quantity -= 1;
+    if (list[idx].quantity <= 0) list.splice(idx, 1);
+  }
+  if (act === 'remove') list.splice(idx, 1);
+  renderList();
+  saveList();
+  if (autoSync) doSync(true);
+});
+
+function addCard(card, finish) {
+  const baseId = card.id || card.riftbound_id || card.name;
+  const selectedFinish = finish || 'Non-Foil';
+
+  // Finish is part of the identity, so foil and non-foil are separate entries.
+  const uniqueId = `${baseId}::${selectedFinish}`;
+
+  const existing = list.find(c => c.uniqueId === uniqueId);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    list.push({
+      uniqueId,
+      id: baseId,
+      name: card.name,
+      set: card.set_id || card.set || card.expansion?.name || card.expansion || '',
+      rarity: card.rarity || '',
+      domain: card.domain || card.color || card.domain_identity || '',
+      finish: selectedFinish,
+      quantity: 1,
+    });
+  }
+
+  renderList();
+  saveList();
+  if (autoSync) doSync(true);
+}
+
+function runSearch(q) {
+  const query = (q || '').trim().toLowerCase();
+  if (query.length < 2) {
     els.results.innerHTML = '';
-
     return;
-
   }
 
-
-  if(!cardsLoaded){
-
-    els.results.innerHTML =
-      cardsLoadError
-
-        ? `
-          <div class="empty-note">
-            Card data hasn't loaded
-            (${escapeHtml(cardsLoadError)}).
-            Make sure data/cards.json
-            exists next to this page.
-          </div>
-        `
-
-        : `
-          <div class="empty-note">
-            Loading card data…
-          </div>
-        `;
-
+  if (!cardsLoaded) {
+    els.results.innerHTML = cardsLoadError
+      ? `<div class="empty-note">Card data hasn't loaded (${escapeHtml(cardsLoadError)}). Make sure data/cards.json exists next to this page.</div>`
+      : `<div class="empty-note">Loading card data…</div>`;
     return;
-
   }
 
-
-  const matches =
-    allCards
-
-      .filter(
-        c =>
-          (c.name || '')
-            .toLowerCase()
-            .includes(query)
-      )
-
-      .sort((a,b) => {
-
-        const an =
-          (a.name || '')
-            .toLowerCase();
-
-        const bn =
-          (b.name || '')
-            .toLowerCase();
-
-
-        const aStarts =
-          an.startsWith(query)
-            ? 0
-            : 1;
-
-        const bStarts =
-          bn.startsWith(query)
-            ? 0
-            : 1;
-
-
-        if(aStarts !== bStarts){
-
-          return aStarts - bStarts;
-
-        }
-
-
-        if(an !== bn){
-
-          return an.localeCompare(bn);
-
-        }
-
-
-        /*
-         * Same name:
-         * keep variants together.
-         */
-
-        return String(
-          a.id ?? ''
-        ).localeCompare(
-          String(b.id ?? '')
-        );
-
-      })
-
-      .slice(0,40);
-
+  const matches = allCards
+    .filter(c => (c.name || '').toLowerCase().includes(query))
+    .sort((a, b) => {
+      const an = (a.name || '').toLowerCase();
+      const bn = (b.name || '').toLowerCase();
+      const aStarts = an.startsWith(query) ? 0 : 1;
+      const bStarts = bn.startsWith(query) ? 0 : 1;
+      if (aStarts !== bStarts) return aStarts - bStarts;
+      if (an !== bn) return an.localeCompare(bn);
+      // Same name (variants of the same card): keep them together,
+      // ordered by collector id/number so alt-art/signature versions
+      // land next to their base printing.
+      return String(a.id ?? '').localeCompare(String(b.id ?? ''));
+    })
+    .slice(0, 40);
 
   renderResults(matches);
-
 }
 
-
-/* ============================================================
-   RENDER SEARCH RESULTS
-   ============================================================ */
-
-function renderResults(cards){
-
-  if(!cards || cards.length === 0){
-
-    els.results.innerHTML =
-      `<div class="empty-note">
-        No cards found.
-      </div>`;
-
+function renderResults(cards) {
+  if (!cards || cards.length === 0) {
+    els.results.innerHTML = `<div class="empty-note">No cards found.</div>`;
     return;
-
   }
-
 
   els.results.innerHTML = '';
 
-
   cards.forEach(card => {
+    const row = document.createElement('div');
+    row.className = 'result-row';
 
-    const row =
-      document.createElement('div');
-
-    row.className =
-      'result-row';
-
-
-    const setName =
-      card.set_id ||
-      card.set ||
-      card.expansion?.name ||
-      card.expansion ||
-      '';
-
-
-    /*
-     * IMPORTANT:
-     *
-     * hasNormal = "1"
-     * means Non-Foil exists.
-     *
-     * hasFoil = "1"
-     * means Foil exists.
-     *
-     * They are treated as two
-     * separate selectable versions.
-     */
-
-    const hasNormal =
-      String(card.hasNormal) === '1';
-
-
-    const hasFoil =
-      String(card.hasFoil) === '1';
-
-
-    let buttons = '';
-
-
-    /*
-     * NON-FOIL BUTTON
-     */
-
-    if(hasNormal){
-
-      buttons += `
-
-        <button
-          class="add-btn"
-          data-finish="Non-Foil"
-          title="Add Non-Foil">
-
-          + NF
-
-        </button>
-
-      `;
-
-    }
-
-
-    /*
-     * FOIL BUTTON
-     */
-
-    if(hasFoil){
-
-      buttons += `
-
-        <button
-          class="add-btn foil-btn"
-          data-finish="Foil"
-          title="Add Foil">
-
-          + F
-
-        </button>
-
-      `;
-
-    }
-
-
-    /*
-     * Neither version available.
-     */
-
-    if(!buttons){
-
-      buttons = `
-
-        <span class="no-version">
-          No version available
-        </span>
-
-      `;
-
-    }
-
+    const setName = card.set_id || card.set || card.expansion?.name || card.expansion || '';
+    const hasNormal = String(card.hasNormal) === '1';
+    const hasFoil = String(card.hasFoil) === '1';
 
     row.innerHTML = `
-
       <div class="meta">
-
-        <div class="card-name">
-          ${escapeHtml(card.name)}
-        </div>
-
-
+        <div class="card-name">${escapeHtml(card.name)}</div>
         <div class="card-tags">
-
           ${escapeHtml(setName)}
-
-          ${
-            card.rarity
-              ? ' · ' +
-                escapeHtml(card.rarity)
-              : ''
-          }
-
-          ${
-            card.domain
-              ? ' · ' +
-                escapeHtml(card.domain)
-              : ''
-          }
-
-          ${
-            card.id
-              ? ' · <span class="variant-code">' +
-                escapeHtml(card.id) +
-                '</span>'
-              : ''
-          }
-
+          ${card.rarity ? ' · ' + escapeHtml(card.rarity) : ''}
+          ${card.domain ? ' · ' + escapeHtml(card.domain) : ''}
+          ${card.id ? ' · <span class="variant-code">' + escapeHtml(card.id) + '</span>' : ''}
         </div>
-
       </div>
-
-
-      <div class="finish-buttons">
-
-        ${buttons}
-
+      <div style="display:flex; gap:5px; flex-shrink:0;">
+        ${hasNormal ? '<button class="add-btn" title="Add Non-Foil">+ NF</button>' : ''}
+        ${hasFoil ? '<button class="add-btn" title="Add Foil">+ F</button>' : ''}
+        ${!hasNormal && !hasFoil ? '<button class="add-btn" title="Add card">+</button>' : ''}
       </div>
-
     `;
 
+    const buttons = row.querySelectorAll('.add-btn');
 
-    /*
-     * Attach click handler to
-     * every finish button.
-     */
+    if (hasNormal && buttons[0]) {
+      buttons[0].addEventListener('click', () => addCard(card, 'Non-Foil'));
+    }
 
-    row
-      .querySelectorAll('.add-btn')
-      .forEach(btn => {
+    if (hasFoil && buttons[1]) {
+      buttons[1].addEventListener('click', () => addCard(card, 'Foil'));
+    }
 
-        btn.addEventListener(
-          'click',
-          () => {
-
-            addCard(
-              card,
-              btn.dataset.finish
-            );
-
-          }
-        );
-
-      });
-
+    if (!hasNormal && !hasFoil && buttons[0]) {
+      buttons[0].addEventListener('click', () => addCard(card, 'Non-Foil'));
+    }
 
     els.results.appendChild(row);
-
   });
-
 }
 
+els.search.addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  const q = e.target.value;
+  searchTimer = setTimeout(() => runSearch(q), 120);
+});
 
-/* ============================================================
-   SEARCH INPUT
-   ============================================================ */
-
-els.search.addEventListener(
-  'input',
-  (e) => {
-
-    clearTimeout(searchTimer);
-
-
-    const q =
-      e.target.value;
-
-
-    searchTimer =
-      setTimeout(
-        () => runSearch(q),
-        120
-      );
-
-  }
-);
-
-
-/* ============================================================
-   GOOGLE SHEET SYNC
-   ============================================================ */
-
-async function doSync(silent){
-
-  if(!webhookUrl){
-
-    if(!silent){
-
-      setStatus(
-        'No Sheet connected yet — click the ⚙ icon to set one up.',
-        'err'
-      );
-
+async function doSync(silent) {
+  if (!webhookUrl) {
+    if (!silent) {
+      setStatus('No Sheet connected yet — click the ⚙ icon to set one up.', 'err');
       openSettings();
-
     }
-
     return;
-
   }
-
-
-  els.syncBtn.disabled =
-    true;
-
-
-  if(!silent){
-
-    setStatus(
-      'Syncing…',
-      ''
-    );
-
+  els.syncBtn.disabled = true;
+  if (!silent) setStatus('Syncing…', '');
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        cards: list.map(c => ({
+          id: c.id,
+          name: c.name,
+          set: c.set,
+          rarity: c.rarity,
+          domain: c.domain,
+          finish: c.finish || 'Non-Foil',
+          quantity: c.quantity
+        }))
+      }),
+    });
+    let ok = res.ok;
+    try {
+      const json = await res.json();
+      ok = ok && json.status === 'ok';
+    } catch (_) { /* response not readable cross-origin, assume best-effort */ }
+    setStatus(ok ? `Saved ${list.length} card${list.length === 1 ? '' : 's'} to shared Google Sheet · ${new Date().toLocaleTimeString()}` : 'Sync sent — check your Sheet to confirm.', 'ok');
+  } catch (err) {
+    setStatus('Sync failed. Double-check the Web app URL and deployment access.', 'err');
+  } finally {
+    els.syncBtn.disabled = false;
   }
-
-
-  try{
-
-    const res =
-      await fetch(
-        webhookUrl,
-        {
-
-          method:'POST',
-
-          headers:{
-            'Content-Type':
-              'text/plain;charset=utf-8'
-          },
-
-          body:
-            JSON.stringify({
-              cards:list
-            })
-
-        }
-      );
-
-
-    let ok =
-      res.ok;
-
-
-    try{
-
-      const json =
-        await res.json();
-
-      ok =
-        ok &&
-        json.status === 'ok';
-
-    }catch(_){
-
-      /*
-       * Response may not be readable
-       * cross-origin.
-       *
-       * Treat the request as
-       * best-effort.
-       */
-
-    }
-
-
-    setStatus(
-
-      ok
-
-        ? `Synced ${list.length} selection${list.length === 1 ? '' : 's'} to your Sheet · ${new Date().toLocaleTimeString()}`
-
-        : 'Sync sent — check your Sheet to confirm.',
-
-      'ok'
-
-    );
-
-
-  }catch(err){
-
-    setStatus(
-      'Sync failed. Double-check the Web app URL and deployment access.',
-      'err'
-    );
-
-  }finally{
-
-    els.syncBtn.disabled =
-      false;
-
-  }
-
 }
 
-
-/* ============================================================
-   STATUS
-   ============================================================ */
-
-function setStatus(msg,kind){
-
-  els.statusText.textContent =
-    msg;
-
-  els.statusText.className =
-    'status-text' +
-    (kind
-      ? ' ' + kind
-      : '');
-
+function setStatus(msg, kind) {
+  els.statusText.textContent = msg;
+  els.statusText.className = 'status-text' + (kind ? ' ' + kind : '');
 }
 
+els.syncBtn.addEventListener('click', () => doSync(false));
 
-/* ============================================================
-   SYNC BUTTON
-   ============================================================ */
+function openSettings() { els.overlay.classList.add('on'); }
+function closeSettings() { els.overlay.classList.remove('on'); }
+els.settingsBtn.addEventListener('click', openSettings);
+els.closeSettingsBtn.addEventListener('click', closeSettings);
+els.overlay.addEventListener('click', (e) => { if (e.target === els.overlay) closeSettings(); });
 
-els.syncBtn.addEventListener(
-  'click',
-  () => doSync(false)
-);
+els.saveSettingsBtn.addEventListener('click', () => {
+  webhookUrl = els.webhookInput.value.trim();
+  autoSync = els.autoSyncToggle.checked;
+  try {
+    localStorage.setItem('riftbound:webhook', webhookUrl);
+    localStorage.setItem('riftbound:autosync', String(autoSync));
+  } catch (e) { console.error('Failed to save settings', e); }
+  closeSettings();
 
-
-/* ============================================================
-   SETTINGS MODAL
-   ============================================================ */
-
-function openSettings(){
-
-  els.overlay.classList.add('on');
-
-}
-
-
-function closeSettings(){
-
-  els.overlay.classList.remove('on');
-
-}
-
-
-els.settingsBtn.addEventListener(
-  'click',
-  openSettings
-);
-
-
-els.closeSettingsBtn.addEventListener(
-  'click',
-  closeSettings
-);
-
-
-els.overlay.addEventListener(
-  'click',
-  (e) => {
-
-    if(e.target === els.overlay){
-
-      closeSettings();
-
-    }
-
+  if (webhookUrl) {
+    setStatus('Sheet connected. Loading shared list…', 'ok');
+    loadListFromSheet();
+  } else {
+    setStatus('', '');
   }
-);
+});
 
-
-/* ============================================================
-   SAVE SETTINGS
-   ============================================================ */
-
-els.saveSettingsBtn.addEventListener(
-  'click',
-  () => {
-
-    webhookUrl =
-      els.webhookInput.value.trim();
-
-
-    autoSync =
-      els.autoSyncToggle.checked;
-
-
-    try{
-
-      localStorage.setItem(
-        'riftbound:webhook',
-        webhookUrl
-      );
-
-
-      localStorage.setItem(
-        'riftbound:autosync',
-        String(autoSync)
-      );
-
-    }catch(e){
-
-      console.error(
-        'Failed to save settings',
-        e
-      );
-
-    }
-
-
-    closeSettings();
-
-
-    setStatus(
-      webhookUrl
-        ? 'Sheet connected.'
-        : '',
-      'ok'
-    );
-
-  }
-);
-
-
-/* ============================================================
-   COPY GOOGLE SCRIPT
-   ============================================================ */
-
-els.copyScriptBtn.addEventListener(
-  'click',
-  () => {
-
-    navigator.clipboard
-      .writeText(APPS_SCRIPT)
-
-      .then(() => {
-
-        els.copyScriptBtn.textContent =
-          'Copied!';
-
-
-        setTimeout(
-          () => {
-
-            els.copyScriptBtn.textContent =
-              'Copy script';
-
-          },
-          1500
-        );
-
-      });
-
-  }
-);
-
-
-/* ============================================================
-   INITIALIZE
-   ============================================================ */
-
-loadCardDatabase()
-  .then(() => {
-
-    /*
-     * Re-run any search that
-     * was entered while the
-     * database was loading.
-     */
-
-    if(
-      els.search.value.trim().length >= 2
-    ){
-
-      runSearch(
-        els.search.value
-      );
-
-    }
-
+els.copyScriptBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(APPS_SCRIPT).then(() => {
+    els.copyScriptBtn.textContent = 'Copied!';
+    setTimeout(() => { els.copyScriptBtn.textContent = 'Copy script'; }, 1500);
   });
+});
 
-
+loadCardDatabase().then(() => {
+  // Re-run any in-progress search now that data has arrived.
+  if (els.search.value.trim().length >= 2) runSearch(els.search.value);
+});
 loadState();
+</script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("viewSheetBtn");
+  if (btn) {
+    btn.addEventListener("click", function () {
+      window.open("https://script.google.com/macros/s/AKfycbzoDlRxCPtr7sP9sTyDsnIt1V-j-b8U12Dr_R-LwFOM_VPpppRBxkt3ksp6q7JKaLYM/exec", "_blank", "noopener,noreferrer");
+    });
+  }
+});
 </script>
 
 </body>
