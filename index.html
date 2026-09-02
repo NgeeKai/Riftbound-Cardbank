@@ -330,26 +330,24 @@ let webhookUrl = '';
 let autoSync = false;
 let searchTimer = null;
 
-async function loadState() {
+function loadState() {
   try {
-    const l = await window.storage.get('riftbound:list');
-    list = l ? JSON.parse(l.value) : [];
+    const l = localStorage.getItem('riftbound:list');
+    list = l ? JSON.parse(l) : [];
   } catch (e) { list = []; }
   try {
-    const w = await window.storage.get('riftbound:webhook');
-    webhookUrl = w ? w.value : '';
+    webhookUrl = localStorage.getItem('riftbound:webhook') || '';
   } catch (e) { webhookUrl = ''; }
   try {
-    const a = await window.storage.get('riftbound:autosync');
-    autoSync = a ? a.value === 'true' : false;
+    autoSync = localStorage.getItem('riftbound:autosync') === 'true';
   } catch (e) { autoSync = false; }
   els.webhookInput.value = webhookUrl;
   els.autoSyncToggle.checked = autoSync;
   renderList();
 }
 
-async function saveList() {
-  try { await window.storage.set('riftbound:list', JSON.stringify(list)); }
+function saveList() {
+  try { localStorage.setItem('riftbound:list', JSON.stringify(list)); }
   catch (e) { console.error('Failed to save list', e); }
 }
 
@@ -530,12 +528,12 @@ els.settingsBtn.addEventListener('click', openSettings);
 els.closeSettingsBtn.addEventListener('click', closeSettings);
 els.overlay.addEventListener('click', (e) => { if (e.target === els.overlay) closeSettings(); });
 
-els.saveSettingsBtn.addEventListener('click', async () => {
+els.saveSettingsBtn.addEventListener('click', () => {
   webhookUrl = els.webhookInput.value.trim();
   autoSync = els.autoSyncToggle.checked;
   try {
-    await window.storage.set('riftbound:webhook', webhookUrl);
-    await window.storage.set('riftbound:autosync', String(autoSync));
+    localStorage.setItem('riftbound:webhook', webhookUrl);
+    localStorage.setItem('riftbound:autosync', String(autoSync));
   } catch (e) { console.error('Failed to save settings', e); }
   closeSettings();
   setStatus(webhookUrl ? 'Sheet connected.' : '', 'ok');
