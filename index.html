@@ -791,25 +791,15 @@ function renderResults(cards) {
         </div>
       </div>
       <div style="display:flex; gap:5px; flex-shrink:0;">
-        ${hasNormal ? '<button class="add-btn" title="Add Non-Foil">+ NF</button>' : ''}
-        ${hasFoil ? '<button class="add-btn" title="Add Foil">+ F</button>' : ''}
-        ${!hasNormal && !hasFoil ? '<button class="add-btn" title="Add card">+</button>' : ''}
+        ${hasNormal ? '<button class="add-btn" data-finish="Non-Foil" title="Add Non-Foil">+ NF</button>' : ''}
+        ${hasFoil ? '<button class="add-btn" data-finish="Foil" title="Add Foil">+ F</button>' : ''}
+        ${!hasNormal && !hasFoil ? '<button class="add-btn" data-finish="Non-Foil" title="Add card">+</button>' : ''}
       </div>
     `;
 
-    const buttons = row.querySelectorAll('.add-btn');
-
-    if (hasNormal && buttons[0]) {
-      buttons[0].addEventListener('click', () => addCard(card, 'Non-Foil'));
-    }
-
-    if (hasFoil && buttons[1]) {
-      buttons[1].addEventListener('click', () => addCard(card, 'Foil'));
-    }
-
-    if (!hasNormal && !hasFoil && buttons[0]) {
-      buttons[0].addEventListener('click', () => addCard(card, 'Non-Foil'));
-    }
+    row.querySelectorAll('.add-btn').forEach(btn => {
+      btn.addEventListener('click', () => addCard(card, btn.dataset.finish));
+    });
 
     els.results.appendChild(row);
   });
