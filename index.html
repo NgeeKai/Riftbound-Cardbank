@@ -151,11 +151,12 @@
   }
   .list-row .meta{flex:1; min-width:0;}
   .qty-ctrl{display:flex; align-items:center; gap:6px;}
-  .qty-ctrl button{
+  .qty-input{
+    width:52px; text-align:center; font-variant-numeric:tabular-nums;
     background:var(--void); border:1px solid var(--line); color:var(--text);
-    width:26px;height:26px;border-radius:6px; cursor:pointer; font-size:.95rem;
+    border-radius:6px; padding:5px 4px; font-size:.9rem; font-family:inherit;
   }
-  .qty-ctrl span{min-width:20px; text-align:center; font-variant-numeric:tabular-nums;}
+  .qty-input:focus{border-color:var(--teal); outline:none;}
   .remove-btn{
     background:none; border:none; color:var(--text-dim); font-size:1.1rem;
     cursor:pointer; padding:2px 4px;
@@ -533,6 +534,8 @@ async function loadListFromSheet() {
       throw new Error('Invalid response from Google Apps Script');
     }
 
+    // Rows are appended to the bottom of the sheet as cards are added, so
+    // reverse here to show the most recently added card first.
     list = data.cards
       .filter(c => Number(c.quantity) > 0)
       .map(c => ({
@@ -544,7 +547,8 @@ async function loadListFromSheet() {
         domain: c.domain || '',
         finish: c.finish || 'Non-Foil',
         quantity: Number(c.quantity) || 0
-      }));
+      }))
+      .reverse();
 
     saveList();
     renderList();
@@ -602,9 +606,7 @@ function renderList() {
         <div class="card-tags">${escapeHtml(c.set || '')} · ${escapeHtml(c.rarity || '')}${c.domain ? ' · ' + escapeHtml(c.domain) : ''}${c.id ? ' · <span class="variant-code">' + escapeHtml(c.id) + '</span>' : ''}${c.finish ? ' · ' + escapeHtml(c.finish) : ''}</div>
       </div>
       <div class="qty-ctrl">
-        <button data-act="dec" data-idx="${idx}">−</button>
-        <span>${c.quantity}</span>
-        <button data-act="inc" data-idx="${idx}">+</button>
+        <input type="number" class="qty-input" data-idx="${idx}" value="${c.quantity}" min="0" inputmode="numeric">
       </div>
       <button class="remove-btn" data-act="remove" data-idx="${idx}">✕</button>
     `;
@@ -643,17 +645,16 @@ function reconcileQuantity(uniqueId, quantity, cardStub) {
   } else if (idx !== -1) {
     list[idx].quantity = quantity;
   } else {
-    list.push({ uniqueId, ...cardStub, quantity });
+    list.unshift({ uniqueId, ...cardStub, quantity });
   }
   renderList();
   saveList();
 }
 
 els.listBody.addEventListener('click', async (e) => {
-  const btn = e.target.closest('button[data-act]');
+  const btn = e.target.closest('button[data-act="remove"]');
   if (!btn) return;
   const idx = parseInt(btn.dataset.idx, 10);
-  const act = btn.dataset.act;
   const item = list[idx];
   if (!item) return;
 
@@ -661,39 +662,52 @@ els.listBody.addEventListener('click', async (e) => {
     id: item.id, name: item.name, set: item.set,
     rarity: item.rarity, domain: item.domain, finish: item.finish,
   };
-  const uniqueId = item.uniqueId;
 
-  if (act === 'inc') {
-    item.quantity += 1;
-    renderList(); saveList();
-    try {
-      const qty = await postCardAction('increment', cardStub, 1);
-      reconcileQuantity(uniqueId, qty, cardStub);
-    } catch (err) {
-      setStatus('Could not save that change — refreshing from Sheet.', 'err');
-      loadListFromSheet();
-    }
-  } else if (act === 'dec') {
-    item.quantity -= 1;
-    const wasRemoved = item.quantity <= 0;
-    if (wasRemoved) list.splice(idx, 1);
-    renderList(); saveList();
-    try {
-      const qty = await postCardAction('increment', cardStub, -1);
-      if (!wasRemoved) reconcileQuantity(uniqueId, qty, cardStub);
-    } catch (err) {
-      setStatus('Could not save that change — refreshing from Sheet.', 'err');
-      loadListFromSheet();
-    }
-  } else if (act === 'remove') {
+  list.splice(idx, 1);
+  renderList(); saveList();
+  try {
+    await postCardAction('remove', cardStub, 0);
+  } catch (err) {
+    setStatus('Could not remove that card — refreshing from Sheet.', 'err');
+    loadListFromSheet();
+  }
+});
+
+// Manually typed quantity. Applies the difference from the current value as
+// a single increment so it stays compatible with the atomic per-card sync.
+els.listBody.addEventListener('change', async (e) => {
+  const input = e.target.closest('.qty-input');
+  if (!input) return;
+  const idx = parseInt(input.dataset.idx, 10);
+  const item = list[idx];
+  if (!item) return;
+
+  let newQty = parseInt(input.value, 10);
+  if (isNaN(newQty) || newQty < 0) newQty = item.quantity;
+
+  const delta = newQty - item.quantity;
+  if (delta === 0) { input.value = item.quantity; return; }
+
+  const cardStub = {
+    id: item.id, name: item.name, set: item.set,
+    rarity: item.rarity, domain: item.domain, finish: item.finish,
+  };
+  const uniqueId = item.uniqueId;
+  const wasRemoved = newQty <= 0;
+
+  if (wasRemoved) {
     list.splice(idx, 1);
-    renderList(); saveList();
-    try {
-      await postCardAction('remove', cardStub, 0);
-    } catch (err) {
-      setStatus('Could not remove that card — refreshing from Sheet.', 'err');
-      loadListFromSheet();
-    }
+  } else {
+    item.quantity = newQty;
+  }
+  renderList(); saveList();
+
+  try {
+    const qty = await postCardAction('increment', cardStub, delta);
+    if (!wasRemoved) reconcileQuantity(uniqueId, qty, cardStub);
+  } catch (err) {
+    setStatus('Could not save that change — refreshing from Sheet.', 'err');
+    loadListFromSheet();
   }
 });
 
@@ -711,10 +725,11 @@ async function addCard(card, finish) {
     finish: selectedFinish,
   };
 
-  // Optimistic local update for instant feedback.
+  // Optimistic local update for instant feedback. New cards go to the top;
+  // an existing card just gets its quantity bumped in place.
   const existing = list.find(c => c.uniqueId === uniqueId);
   if (existing) existing.quantity += 1;
-  else list.push({ uniqueId, ...cardStub, quantity: 1 });
+  else list.unshift({ uniqueId, ...cardStub, quantity: 1 });
   renderList();
   saveList();
 
