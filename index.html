@@ -130,6 +130,35 @@
   }
   .count-pill{color:var(--text-dim); font-size:.82rem;}
 
+  .list-controls{
+    display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;
+  }
+  .list-controls input[type="text"]{flex:1; min-width:160px;}
+  .list-controls select{
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:.88rem;
+    font-family:inherit;
+    outline:none;
+    cursor:pointer;
+  }
+  .list-controls select:focus{border-color:var(--teal);}
+
+  .pagination{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    margin-top:14px;
+  }
+  .pagination button{
+    background:var(--surface-2); border:1px solid var(--line); color:var(--text);
+    padding:7px 14px; border-radius:8px; cursor:pointer; font-size:.82rem;
+  }
+  .pagination button:hover:not(:disabled){border-color:var(--teal);}
+  .pagination button:disabled{opacity:.4; cursor:not-allowed;}
+  .pagination .page-info{color:var(--text-dim); font-size:.8rem;}
+
   .sync-btn{
     background:var(--gold); color:#2a1c02; border:none;
     padding:9px 16px; border-radius:9px; font-weight:600; font-size:.85rem;
@@ -256,7 +285,14 @@
       <h2>Your list</h2>
       <span class="count-pill" id="countPill">0 cards</span>
     </div>
+    <div class="list-controls">
+      <input type="text" id="listSearchInput" placeholder="Filter your list by name..." autocomplete="off">
+      <select id="listFilterSelect">
+        <option value="">All sets</option>
+      </select>
+    </div>
     <div id="listBody"></div>
+    <div class="pagination" id="pagination"></div>
     <div style="display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap;">
       <button class="sync-btn" id="syncBtn">Sync to Sheet</button>
       <span class="status-text" id="statusText"></span>
@@ -337,6 +373,9 @@ const els = {
   autoSyncToggle: document.getElementById('autoSyncToggle'),
   scriptCode: document.getElementById('scriptCode'),
   copyScriptBtn: document.getElementById('copyScriptBtn'),
+  listSearchInput: document.getElementById('listSearchInput'),
+  listFilterSelect: document.getElementById('listFilterSelect'),
+  pagination: document.getElementById('pagination'),
 };
 
 const APPS_SCRIPT = `function doGet(e) {
@@ -485,6 +524,12 @@ let searchTimer = null;
 let autoRefreshTimer = null;
 const pendingRemoval = new Set(); // uniqueIds currently armed for a confirm-delete
 
+let listSearchTerm = '';
+let listFilterValue = '';
+let currentListPage = 1;
+let lastFilterSignature = '';
+const LIST_PAGE_SIZE = 8;
+
 function loadState() {
   try {
     const l = localStorage.getItem('riftbound:list');
@@ -592,19 +637,61 @@ function saveList() {
   catch (e) { console.error('Failed to save list', e); }
 }
 
+function updateListFilterOptions() {
+  const sets = Array.from(new Set(list.map(c => c.set).filter(Boolean))).sort();
+  const signature = sets.join('|');
+  if (signature === lastFilterSignature) return;
+  lastFilterSignature = signature;
+
+  const currentValue = els.listFilterSelect.value;
+  els.listFilterSelect.innerHTML =
+    '<option value="">All sets</option>' +
+    sets.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+  if (sets.includes(currentValue)) {
+    els.listFilterSelect.value = currentValue;
+  } else {
+    listFilterValue = '';
+    els.listFilterSelect.value = '';
+  }
+}
+
 function renderList() {
   const total = list.reduce((s, c) => s + c.quantity, 0);
   els.countPill.textContent = `${list.length} card${list.length === 1 ? '' : 's'} · ${total} total`;
 
+  updateListFilterOptions();
+
   if (list.length === 0) {
     els.listBody.innerHTML = `<div class="empty-state"><div class="glyph">◇</div>Search above and add cards to start your list.</div>`;
+    els.pagination.innerHTML = '';
     return;
   }
+
+  const term = listSearchTerm.trim().toLowerCase();
+  const filtered = list
+    .map((c, idx) => ({ ...c, _idx: idx }))
+    .filter(c => !term || (c.name || '').toLowerCase().includes(term))
+    .filter(c => !listFilterValue || c.set === listFilterValue);
+
+  if (filtered.length === 0) {
+    els.listBody.innerHTML = `<div class="empty-state"><div class="glyph">◇</div>No cards match your search or filter.</div>`;
+    els.pagination.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / LIST_PAGE_SIZE));
+  if (currentListPage > totalPages) currentListPage = totalPages;
+  if (currentListPage < 1) currentListPage = 1;
+
+  const startIdx = (currentListPage - 1) * LIST_PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx + LIST_PAGE_SIZE);
 
   els.listBody.innerHTML = '';
   const rowsWrap = document.createElement('div');
   rowsWrap.className = 'list-rows';
-  list.forEach((c, idx) => {
+  pageItems.forEach((c) => {
+    const idx = c._idx; // index into the real `list` array, for the click/change handlers
     const row = document.createElement('div');
     row.className = 'list-row';
     const isArmed = pendingRemoval.has(c.uniqueId);
@@ -621,7 +708,37 @@ function renderList() {
     rowsWrap.appendChild(row);
   });
   els.listBody.appendChild(rowsWrap);
+
+  renderPagination(totalPages);
 }
+
+function renderPagination(totalPages) {
+  if (totalPages <= 1) {
+    els.pagination.innerHTML = '';
+    return;
+  }
+  els.pagination.innerHTML = `
+    <button id="prevPageBtn" ${currentListPage <= 1 ? 'disabled' : ''}>‹ Prev</button>
+    <span class="page-info">Page ${currentListPage} of ${totalPages}</span>
+    <button id="nextPageBtn" ${currentListPage >= totalPages ? 'disabled' : ''}>Next ›</button>
+  `;
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  if (prevBtn) prevBtn.addEventListener('click', () => { currentListPage -= 1; renderList(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { currentListPage += 1; renderList(); });
+}
+
+els.listSearchInput.addEventListener('input', (e) => {
+  listSearchTerm = e.target.value;
+  currentListPage = 1;
+  renderList();
+});
+
+els.listFilterSelect.addEventListener('change', (e) => {
+  listFilterValue = e.target.value;
+  currentListPage = 1;
+  renderList();
+});
 
 function escapeHtml(str) {
   const d = document.createElement('div');
