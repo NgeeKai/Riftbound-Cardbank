@@ -113,6 +113,7 @@
   .card-name{font-weight:600; font-size:.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .card-tags{color:var(--text-dim); font-size:.76rem; margin-top:2px;}
   .variant-code{font-family:ui-monospace,Menlo,monospace; color:var(--teal);}
+  .price-tag{font-weight:600; color:var(--gold);}
   .add-btn{
     background:var(--teal); color:#0c221f; border:none;
     width:30px;height:30px;border-radius:8px;font-size:1rem;font-weight:700;
@@ -399,9 +400,11 @@ const APPS_SCRIPT = `function doGet(e) {
           id: String(obj['Card ID'] || ''),
           name: String(obj['Name'] || ''),
           set: String(obj['Set'] || ''),
+          setName: String(obj['Set Name'] || ''),
           rarity: String(obj['Rarity'] || ''),
           domain: String(obj['Domain'] || ''),
           finish: String(obj['Finish'] || 'Non-Foil'),
+          price: obj['Price'] === '' || obj['Price'] == null ? null : Number(obj['Price']),
           quantity: Number(obj['Quantity'] || 0)
         });
       }
@@ -437,7 +440,7 @@ function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Riftbound');
-    var headers = ['Card ID', 'Name', 'Set', 'Rarity', 'Domain', 'Finish', 'Quantity'];
+    var headers = ['Card ID', 'Name', 'Set', 'Set Name', 'Rarity', 'Domain', 'Finish', 'Price', 'Quantity'];
 
     if (!sheet) {
       sheet = ss.insertSheet('Riftbound');
@@ -449,12 +452,15 @@ function doPost(e) {
     var card = data.card || {};
     var finish = card.finish || 'Non-Foil';
     var key = String(card.id || '') + '::' + finish;
+    var price = (card.price === undefined || card.price === null) ? '' : Number(card.price);
 
     var values = sheet.getDataRange().getValues();
     var currentHeaders = values[0] || headers;
     var idIdx = currentHeaders.indexOf('Card ID');
     var finishIdx = currentHeaders.indexOf('Finish');
     var qtyIdx = currentHeaders.indexOf('Quantity');
+    var setNameIdx = currentHeaders.indexOf('Set Name');
+    var priceIdx = currentHeaders.indexOf('Price');
 
     var rowIndex = -1;
     for (var i = 1; i < values.length; i++) {
@@ -482,9 +488,11 @@ function doPost(e) {
             card.id || '',
             card.name || '',
             card.set || '',
+            card.setName || '',
             card.rarity || '',
             card.domain || '',
             finish,
+            price,
             delta
           ]);
           resultQuantity = delta;
@@ -494,6 +502,15 @@ function doPost(e) {
       } else {
         var currentQty = Number(values[rowIndex][qtyIdx]) || 0;
         var newQty = currentQty + delta;
+
+        // Keep set name / price fresh on existing rows too, in case they
+        // were blank before or the market price has since moved.
+        if (setNameIdx !== -1 && card.setName) {
+          sheet.getRange(rowIndex + 1, setNameIdx + 1).setValue(card.setName);
+        }
+        if (priceIdx !== -1 && price !== '') {
+          sheet.getRange(rowIndex + 1, priceIdx + 1).setValue(price);
+        }
 
         if (newQty <= 0) {
           sheet.deleteRow(rowIndex + 1);
@@ -594,9 +611,11 @@ async function loadListFromSheet() {
         id: c.id,
         name: c.name,
         set: c.set || '',
+        setName: c.setName || '',
         rarity: c.rarity || '',
         domain: c.domain || '',
         finish: c.finish || 'Non-Foil',
+        price: c.price !== '' && c.price != null ? Number(c.price) : null,
         quantity: Number(c.quantity) || 0
       }))
       .reverse();
@@ -638,7 +657,7 @@ function saveList() {
 }
 
 function updateListFilterOptions() {
-  const sets = Array.from(new Set(list.map(c => c.set).filter(Boolean))).sort();
+  const sets = Array.from(new Set(list.map(c => c.setName || c.set).filter(Boolean))).sort();
   const signature = sets.join('|');
   if (signature === lastFilterSignature) return;
   lastFilterSignature = signature;
@@ -672,7 +691,7 @@ function renderList() {
   const filtered = list
     .map((c, idx) => ({ ...c, _idx: idx }))
     .filter(c => !term || (c.name || '').toLowerCase().includes(term))
-    .filter(c => !listFilterValue || c.set === listFilterValue);
+    .filter(c => !listFilterValue || (c.setName || c.set) === listFilterValue);
 
   if (filtered.length === 0) {
     els.listBody.innerHTML = `<div class="empty-state"><div class="glyph">◇</div>No cards match your search or filter.</div>`;
@@ -698,7 +717,7 @@ function renderList() {
     row.innerHTML = `
       <div class="meta">
         <div class="card-name">${escapeHtml(c.name)}</div>
-        <div class="card-tags">${escapeHtml(c.set || '')} · ${escapeHtml(c.rarity || '')}${c.domain ? ' · ' + escapeHtml(c.domain) : ''}${c.id ? ' · <span class="variant-code">' + escapeHtml(c.id) + '</span>' : ''}${c.finish ? ' · ' + escapeHtml(c.finish) : ''}</div>
+        <div class="card-tags">${escapeHtml(c.setName || c.set || '')} · ${escapeHtml(c.rarity || '')}${c.domain ? ' · ' + escapeHtml(c.domain) : ''}${c.id ? ' · <span class="variant-code">' + escapeHtml(c.id) + '</span>' : ''}${c.finish ? ' · ' + escapeHtml(c.finish) : ''}${c.price != null ? ' · <span class="price-tag">' + formatPrice(c.price) + '</span>' : ''}</div>
       </div>
       <div class="qty-ctrl">
         <input type="number" class="qty-input" data-idx="${idx}" value="${c.quantity}" min="1" inputmode="numeric">
@@ -733,6 +752,32 @@ els.listSearchInput.addEventListener('input', (e) => {
   currentListPage = 1;
   renderList();
 });
+
+// `color` comes back as an array (e.g. ["Chaos"]) rather than a plain string.
+function getDomain(card) {
+  if (Array.isArray(card.color)) return card.color.join(', ');
+  return card.color || card.domain || card.domain_identity || '';
+}
+
+// The API only gives a full set name (e.g. "Unleashed"); the short set code
+// lives at the front of the card id instead (e.g. "UNL" in "UNL-131").
+function getSetName(card) {
+  return card.set_name || card.setName || card.expansion?.name || card.expansion || '';
+}
+function getSetCode(card) {
+  const id = card.id || '';
+  return id.includes('-') ? id.split('-')[0] : (card.set_id || card.set || '');
+}
+
+// price/foilPrice come back as numeric strings.
+function getCardPrice(card, finish) {
+  const raw = finish === 'Foil' ? card.foilPrice : card.price;
+  const num = parseFloat(raw);
+  return Number.isFinite(num) ? num : null;
+}
+function formatPrice(p) {
+  return p == null ? '' : `$${p.toFixed(2)}`;
+}
 
 els.listFilterSelect.addEventListener('change', (e) => {
   listFilterValue = e.target.value;
@@ -802,8 +847,8 @@ els.listBody.addEventListener('click', async (e) => {
   // Second click within the window actually removes it.
   pendingRemoval.delete(uniqueId);
   const cardStub = {
-    id: item.id, name: item.name, set: item.set,
-    rarity: item.rarity, domain: item.domain, finish: item.finish,
+    id: item.id, name: item.name, set: item.set, setName: item.setName,
+    rarity: item.rarity, domain: item.domain, finish: item.finish, price: item.price,
   };
 
   list.splice(idx, 1);
@@ -838,8 +883,8 @@ els.listBody.addEventListener('change', async (e) => {
   if (delta === 0) return;
 
   const cardStub = {
-    id: item.id, name: item.name, set: item.set,
-    rarity: item.rarity, domain: item.domain, finish: item.finish,
+    id: item.id, name: item.name, set: item.set, setName: item.setName,
+    rarity: item.rarity, domain: item.domain, finish: item.finish, price: item.price,
   };
   const uniqueId = item.uniqueId;
   item.quantity = newQty;
@@ -862,10 +907,12 @@ async function addCard(card, finish) {
   const cardStub = {
     id: baseId,
     name: card.name,
-    set: card.set_id || card.set || card.expansion?.name || card.expansion || '',
+    set: getSetCode(card),
+    setName: getSetName(card),
     rarity: card.rarity || '',
-    domain: card.domain || card.color || card.domain_identity || '',
+    domain: getDomain(card),
     finish: selectedFinish,
+    price: getCardPrice(card, selectedFinish),
   };
 
   // Optimistic local update for instant feedback. New cards go to the top;
@@ -934,9 +981,12 @@ function renderResults(cards) {
     const row = document.createElement('div');
     row.className = 'result-row';
 
-    const setName = card.set_id || card.set || card.expansion?.name || card.expansion || '';
+    const setName = getSetName(card);
+    const domain = getDomain(card);
     const hasNormal = String(card.hasNormal) === '1';
     const hasFoil = String(card.hasFoil) === '1';
+    const priceNormal = hasNormal ? getCardPrice(card, 'Non-Foil') : null;
+    const priceFoil = hasFoil ? getCardPrice(card, 'Foil') : null;
 
     row.innerHTML = `
       <div class="meta">
@@ -944,13 +994,13 @@ function renderResults(cards) {
         <div class="card-tags">
           ${escapeHtml(setName)}
           ${card.rarity ? ' · ' + escapeHtml(card.rarity) : ''}
-          ${card.domain ? ' · ' + escapeHtml(card.domain) : ''}
+          ${domain ? ' · ' + escapeHtml(domain) : ''}
           ${card.id ? ' · <span class="variant-code">' + escapeHtml(card.id) + '</span>' : ''}
         </div>
       </div>
       <div style="display:flex; gap:5px; flex-shrink:0;">
-        ${hasNormal ? '<button class="add-btn" data-finish="Non-Foil" title="Add Non-Foil">+ NF</button>' : ''}
-        ${hasFoil ? '<button class="add-btn" data-finish="Foil" title="Add Foil">+ F</button>' : ''}
+        ${hasNormal ? `<button class="add-btn" data-finish="Non-Foil" title="Add Non-Foil${priceNormal != null ? ' (' + formatPrice(priceNormal) + ')' : ''}">+ NF</button>` : ''}
+        ${hasFoil ? `<button class="add-btn" data-finish="Foil" title="Add Foil${priceFoil != null ? ' (' + formatPrice(priceFoil) + ')' : ''}">+ F</button>` : ''}
         ${!hasNormal && !hasFoil ? '<button class="add-btn" data-finish="Non-Foil" title="Add card">+</button>' : ''}
       </div>
     `;
