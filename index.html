@@ -162,6 +162,11 @@
     cursor:pointer; padding:2px 4px;
   }
   .remove-btn:hover{color:var(--danger);}
+  .remove-btn.confirm{
+    background:var(--danger); color:#2a0d09; font-size:.72rem; font-weight:700;
+    padding:5px 9px; border-radius:7px; white-space:nowrap;
+  }
+  .remove-btn.confirm:hover{color:#2a0d09;}
 
   .empty-state{
     text-align:center; padding:34px 10px; color:var(--text-dim);
@@ -478,6 +483,7 @@ let webhookUrl = '';
 let autoRefresh = false;
 let searchTimer = null;
 let autoRefreshTimer = null;
+const pendingRemoval = new Set(); // uniqueIds currently armed for a confirm-delete
 
 function loadState() {
   try {
@@ -551,6 +557,7 @@ async function loadListFromSheet() {
       .reverse();
 
     saveList();
+    pendingRemoval.clear();
     renderList();
 
     setStatus(
@@ -600,15 +607,16 @@ function renderList() {
   list.forEach((c, idx) => {
     const row = document.createElement('div');
     row.className = 'list-row';
+    const isArmed = pendingRemoval.has(c.uniqueId);
     row.innerHTML = `
       <div class="meta">
         <div class="card-name">${escapeHtml(c.name)}</div>
         <div class="card-tags">${escapeHtml(c.set || '')} · ${escapeHtml(c.rarity || '')}${c.domain ? ' · ' + escapeHtml(c.domain) : ''}${c.id ? ' · <span class="variant-code">' + escapeHtml(c.id) + '</span>' : ''}${c.finish ? ' · ' + escapeHtml(c.finish) : ''}</div>
       </div>
       <div class="qty-ctrl">
-        <input type="number" class="qty-input" data-idx="${idx}" value="${c.quantity}" min="0" inputmode="numeric">
+        <input type="number" class="qty-input" data-idx="${idx}" value="${c.quantity}" min="1" inputmode="numeric">
       </div>
-      <button class="remove-btn" data-act="remove" data-idx="${idx}">✕</button>
+      <button class="remove-btn${isArmed ? ' confirm' : ''}" data-act="remove" data-idx="${idx}" title="${isArmed ? 'Click again to confirm' : 'Remove card'}">${isArmed ? 'Confirm?' : '✕'}</button>
     `;
     rowsWrap.appendChild(row);
   });
@@ -657,7 +665,25 @@ els.listBody.addEventListener('click', async (e) => {
   const idx = parseInt(btn.dataset.idx, 10);
   const item = list[idx];
   if (!item) return;
+  const uniqueId = item.uniqueId;
 
+  // First click just arms the button — it turns red and asks to confirm,
+  // then auto-resets after a few seconds so a stray click can't delete
+  // anything.
+  if (!pendingRemoval.has(uniqueId)) {
+    pendingRemoval.add(uniqueId);
+    renderList();
+    setTimeout(() => {
+      if (pendingRemoval.has(uniqueId)) {
+        pendingRemoval.delete(uniqueId);
+        renderList();
+      }
+    }, 3000);
+    return;
+  }
+
+  // Second click within the window actually removes it.
+  pendingRemoval.delete(uniqueId);
   const cardStub = {
     id: item.id, name: item.name, set: item.set,
     rarity: item.rarity, domain: item.domain, finish: item.finish,
@@ -675,6 +701,8 @@ els.listBody.addEventListener('click', async (e) => {
 
 // Manually typed quantity. Applies the difference from the current value as
 // a single increment so it stays compatible with the atomic per-card sync.
+// This field can only ever raise or lower a quantity, never delete a card —
+// removal is only ever done through the confirm-protected ✕ button.
 els.listBody.addEventListener('change', async (e) => {
   const input = e.target.closest('.qty-input');
   if (!input) return;
@@ -683,28 +711,26 @@ els.listBody.addEventListener('change', async (e) => {
   if (!item) return;
 
   let newQty = parseInt(input.value, 10);
-  if (isNaN(newQty) || newQty < 0) newQty = item.quantity;
+  if (isNaN(newQty) || newQty < 1) {
+    input.value = item.quantity;
+    setStatus('Quantity must be at least 1 — use the ✕ button to remove a card.', 'err');
+    return;
+  }
 
   const delta = newQty - item.quantity;
-  if (delta === 0) { input.value = item.quantity; return; }
+  if (delta === 0) return;
 
   const cardStub = {
     id: item.id, name: item.name, set: item.set,
     rarity: item.rarity, domain: item.domain, finish: item.finish,
   };
   const uniqueId = item.uniqueId;
-  const wasRemoved = newQty <= 0;
-
-  if (wasRemoved) {
-    list.splice(idx, 1);
-  } else {
-    item.quantity = newQty;
-  }
+  item.quantity = newQty;
   renderList(); saveList();
 
   try {
     const qty = await postCardAction('increment', cardStub, delta);
-    if (!wasRemoved) reconcileQuantity(uniqueId, qty, cardStub);
+    reconcileQuantity(uniqueId, qty, cardStub);
   } catch (err) {
     setStatus('Could not save that change — refreshing from Sheet.', 'err');
     loadListFromSheet();
