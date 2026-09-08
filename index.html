@@ -296,6 +296,7 @@
     <div class="pagination" id="pagination"></div>
     <div style="display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap;">
       <button class="sync-btn" id="syncBtn">Sync to Sheet</button>
+      <button class="btn-ghost" id="fixInfoBtn" type="button">Fix missing set/price</button>
       <span class="status-text" id="statusText"></span>
     </div>
   </div>
@@ -377,6 +378,7 @@ const els = {
   listSearchInput: document.getElementById('listSearchInput'),
   listFilterSelect: document.getElementById('listFilterSelect'),
   pagination: document.getElementById('pagination'),
+  fixInfoBtn: document.getElementById('fixInfoBtn'),
 };
 
 const APPS_SCRIPT = `function doGet(e) {
@@ -1030,6 +1032,60 @@ els.syncBtn.addEventListener('click', async () => {
   await loadListFromSheet();
   els.syncBtn.disabled = false;
 });
+
+// Backfills Set Name / Price on rows that were added before those columns
+// existed. Sends a zero-delta increment for each affected card, which the
+// Apps Script uses purely to refresh that row's metadata without touching
+// its quantity.
+async function backfillMissingInfo() {
+  const toFix = list.filter(c => !c.setName || c.price == null);
+  if (toFix.length === 0) {
+    setStatus('Nothing to fix — every card already has set/price info.', 'ok');
+    return;
+  }
+  if (!cardsLoaded) {
+    setStatus('Card database is still loading — try again in a moment.', 'err');
+    return;
+  }
+
+  els.fixInfoBtn.disabled = true;
+  setStatus(`Fixing ${toFix.length} card${toFix.length === 1 ? '' : 's'}…`, '');
+
+  let fixed = 0;
+  for (const item of toFix) {
+    const match = allCards.find(c => c.id === item.id);
+    if (!match) continue;
+
+    const setName = getSetName(match);
+    const price = getCardPrice(match, item.finish);
+    const cardStub = {
+      id: item.id,
+      name: item.name,
+      set: item.set || getSetCode(match),
+      setName,
+      rarity: item.rarity,
+      domain: item.domain,
+      finish: item.finish,
+      price,
+    };
+
+    try {
+      await postCardAction('increment', cardStub, 0);
+      item.setName = setName;
+      item.price = price;
+      fixed++;
+    } catch (err) {
+      console.error('Failed to backfill card:', item, err);
+    }
+  }
+
+  renderList();
+  saveList();
+  els.fixInfoBtn.disabled = false;
+  setStatus(`Updated ${fixed} of ${toFix.length} card${toFix.length === 1 ? '' : 's'}.`, fixed > 0 ? 'ok' : 'err');
+}
+
+els.fixInfoBtn.addEventListener('click', backfillMissingInfo);
 
 function openSettings() { els.overlay.classList.add('on'); }
 function closeSettings() { els.overlay.classList.remove('on'); }
